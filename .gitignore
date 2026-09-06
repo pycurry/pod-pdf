@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.env
+data/
+*.log
+.DS_Store
+src/gui/dist/
+src/gui/node_modules/
+

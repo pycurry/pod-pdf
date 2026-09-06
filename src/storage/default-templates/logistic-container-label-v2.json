@@ -1,0 +1,150 @@
+{
+  "basePdf": {
+    "width": 101.6,
+    "height": 152.4,
+    "padding": [4, 4, 4, 4],
+    "staticSchema": [
+      {
+        "name": "header_box",
+        "type": "text",
+        "position": { "x": 4, "y": 4 },
+        "width": 93.6,
+        "height": 18,
+        "backgroundColor": "#f0f4f8",
+        "borderWidth": 0.5,
+        "borderColor": "#cbd5e1",
+        "readOnly": true
+      },
+      {
+        "name": "hub_box",
+        "type": "text",
+        "position": { "x": 55, "y": 24 },
+        "width": 42.6,
+        "height": 22,
+        "backgroundColor": "#0f172a",
+        "fontColor": "#ffffff",
+        "fontSize": 18,
+        "alignment": "center",
+        "readOnly": true
+      }
+    ]
+  },
+  "schemas": [
+    [
+      {
+        "name": "carrier",
+        "type": "text",
+        "position": { "x": 6, "y": 6 },
+        "width": 50,
+        "height": 7,
+        "fontSize": 14,
+        "fontWeight": "bold",
+        "fontColor": "#0f172a"
+      },
+      {
+        "name": "serviceLevel",
+        "type": "text",
+        "position": { "x": 6, "y": 14 },
+        "width": 50,
+        "height": 6,
+        "fontSize": 10,
+        "fontColor": "#475569"
+      },
+      {
+        "name": "matrix_code",
+        "type": "datamatrix",
+        "position": { "x": 78, "y": 5 },
+        "width": 16,
+        "height": 16
+      },
+      {
+        "name": "containerId_label",
+        "type": "text",
+        "position": { "x": 6, "y": 24 },
+        "width": 45,
+        "height": 4,
+        "fontSize": 7,
+        "fontColor": "#64748b",
+        "content": "CONTAINER ID"
+      },
+      {
+        "name": "containerId",
+        "type": "text",
+        "position": { "x": 6, "y": 28 },
+        "width": 45,
+        "height": 8,
+        "fontSize": 13,
+        "fontWeight": "bold",
+        "fontColor": "#0f172a"
+      },
+      {
+        "name": "weight_label",
+        "type": "text",
+        "position": { "x": 6, "y": 38 },
+        "width": 45,
+        "height": 4,
+        "fontSize": 7,
+        "fontColor": "#64748b",
+        "content": "TOTAL WEIGHT"
+      },
+      {
+        "name": "weight",
+        "type": "text",
+        "position": { "x": 6, "y": 42 },
+        "width": 45,
+        "height": 7,
+        "fontSize": 11,
+        "fontWeight": "bold",
+        "fontColor": "#1e293b"
+      },
+      {
+        "name": "hub_label",
+        "type": "text",
+        "position": { "x": 57, "y": 25 },
+        "width": 38,
+        "height": 4,
+        "fontSize": 6,
+        "fontColor": "#94a3b8",
+        "alignment": "center",
+        "content": "DESTINATION HUB"
+      },
+      {
+        "name": "destinationHub",
+        "type": "text",
+        "position": { "x": 57, "y": 30 },
+        "width": 38,
+        "height": 14,
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "fontColor": "#ffffff",
+        "alignment": "center"
+      },
+      {
+        "name": "barcode_tracking",
+        "type": "code128",
+        "position": { "x": 6, "y": 52 },
+        "width": 91.6,
+        "height": 38
+      },
+      {
+        "name": "qrcode_manifest",
+        "type": "qrcode",
+        "position": { "x": 30, "y": 94 },
+        "width": 42,
+        "height": 42
+      },
+      {
+        "name": "footer_tag",
+        "type": "text",
+        "position": { "x": 6, "y": 140 },
+        "width": 91.6,
+        "height": 6,
+        "fontSize": 8,
+        "alignment": "center",
+        "fontColor": "#94a3b8",
+        "content": "POD-PDF LOGISTICS PLATFORM - OFFICIAL THERMAL LABEL"
+      }
+    ]
+  ]
+}
+

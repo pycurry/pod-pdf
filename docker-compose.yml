@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # pod-PDF Enterprise Microservice
+  # ==========================================
+  pod-pdf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pod-pdf-service
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - STORAGE_TYPE=s3
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_S3_BUCKET=pod-pdf-storage-bucket
+      - AWS_ENDPOINT=http://localstack:4566
+      - QUEUE_DRIVER=sqs
+      - SQS_QUEUE_URL=http://localstack:4566/000000000000/pdf-jobs
+      - SNS_TOPIC_ARN=arn:aws:sns:us-east-1:000000000000:pdf-job-completed
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - pod-pdf-network
+
+  # ==========================================
+  # LocalStack (AWS S3, SQS, SNS Emulation)
+  # ==========================================
+  localstack:
+    image: localstack/localstack:latest
+    container_name: pod-pdf-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,sns
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pod-pdf-network
+
+  # ==========================================
+  # Apache Kafka & Zookeeper (Optional Queue)
+  # ==========================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: pod-pdf-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - pod-pdf-network
+    profiles:
+      - kafka
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: pod-pdf-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - pod-pdf-network
+    profiles:
+      - kafka
+
+networks:
+  pod-pdf-network:
+    driver: bridge
+
