@@ -178,5 +178,5 @@ npm run test:coverage
 
 ## 7. Documentation & Guides
 
-- [WALKTHROUGH.md](file:///home/alonemusk/Projects/pod-pdf/WALKTHROUGH.md): Architecture overview, design decisions, and test verification report.
-- [docs/DEVELOPER_GUIDE.md](file:///home/alonemusk/Projects/pod-pdf/docs/DEVELOPER_GUIDE.md): Developer guide, curl API examples, how to add custom plugins, storage providers, and message queue drivers.
+- [WALKTHROUGH.md](./WALKTHROUGH.md): Architecture overview, design decisions, and test verification report.
+- [docs/DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md): Developer guide, curl API examples, how to add custom plugins, storage providers, and message queue drivers.
