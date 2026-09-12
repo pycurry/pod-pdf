@@ -174,12 +174,139 @@ export default function App() {
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // New Template Modal State
+  const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
+  const [newTemplateName, setNewTemplateName] = useState<string>('');
+  const [newPresetId, setNewPresetId] = useState<string>('thermal-4x6');
+  const [newOrientation, setNewOrientation] = useState<PageOrientation>('portrait');
+  const [newCustomWidth, setNewCustomWidth] = useState<number>(101.6);
+  const [newCustomHeight, setNewCustomHeight] = useState<number>(152.4);
+  const [newCustomUnit, setNewCustomUnit] = useState<DimensionUnit>('mm');
+  const [newIncludeStarter, setNewIncludeStarter] = useState<boolean>(true);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+
   const designerContainerRef = useRef<HTMLDivElement | null>(null);
   const designerInstanceRef = useRef<Designer | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleOpenNewModal = () => {
+    const timestamp = Math.floor(Math.random() * 899 + 100);
+    setNewTemplateName(`label-template-${timestamp}`);
+    setNewPresetId('thermal-4x6');
+    setNewOrientation('portrait');
+    setNewCustomWidth(101.6);
+    setNewCustomHeight(152.4);
+    setNewCustomUnit('mm');
+    setNewIncludeStarter(true);
+    setIsNewModalOpen(true);
+  };
+
+  const handleCreateNewTemplate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanName = newTemplateName.trim();
+    if (!cleanName) {
+      showToast('❌ Template name cannot be empty');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(cleanName)) {
+      showToast('❌ Template name can only contain letters, numbers, hyphens, and underscores');
+      return;
+    }
+
+    let widthMm = newCustomWidth;
+    let heightMm = newCustomHeight;
+
+    if (newPresetId !== 'custom') {
+      const preset = PRESETS.find((p) => p.id === newPresetId);
+      if (preset) {
+        widthMm = preset.widthMm;
+        heightMm = preset.heightMm;
+      }
+    } else if (newCustomUnit === 'in') {
+      widthMm = parseFloat((newCustomWidth * 25.4).toFixed(2));
+      heightMm = parseFloat((newCustomHeight * 25.4).toFixed(2));
+    }
+
+    // Apply orientation
+    const minDim = Math.min(widthMm, heightMm);
+    const maxDim = Math.max(widthMm, heightMm);
+    const finalWidth = newOrientation === 'landscape' ? maxDim : minDim;
+    const finalHeight = newOrientation === 'landscape' ? minDim : maxDim;
+
+    const initialSchema = newIncludeStarter ? [
+      {
+        name: "title",
+        type: "text",
+        position: { x: 6, y: 6 },
+        width: Math.min(finalWidth - 12, 60),
+        height: 8,
+        fontSize: 14,
+        content: "Template Title",
+      },
+      {
+        name: "barcode_tracking",
+        type: "code128",
+        position: { x: 6, y: 20 },
+        width: Math.min(finalWidth - 12, 88),
+        height: 25,
+        content: "1Z9999999999999999",
+      }
+    ] : [];
+
+    const newTemplateObj = {
+      basePdf: {
+        width: finalWidth,
+        height: finalHeight,
+        padding: [4, 4, 4, 4],
+      },
+      schemas: [initialSchema],
+    };
+
+    try {
+      setIsCreating(true);
+      const res = await fetch(`/api/v1/templates/${encodeURIComponent(cleanName)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTemplateObj),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🎉 Created new template '${cleanName}'!`);
+        setIsNewModalOpen(false);
+        await fetchTemplates();
+        setSelectedTemplateName(cleanName);
+      } else {
+        showToast(`❌ Failed to create template: ${data.error?.message || JSON.stringify(data)}`);
+      }
+    } catch (err: any) {
+      showToast(`❌ Network error: ${err.message}`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!window.confirm(`Are you sure you want to delete template '${selectedTemplateName}'?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/v1/templates/${encodeURIComponent(selectedTemplateName)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🗑️ Deleted template '${selectedTemplateName}'`);
+        await fetchTemplates();
+      } else {
+        showToast(`❌ Error deleting: ${data.error?.message}`);
+      }
+    } catch (err: any) {
+      showToast(`❌ Network error: ${err.message}`);
+    }
   };
 
   // Fetch templates list on mount
@@ -513,6 +640,25 @@ export default function App() {
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleOpenNewModal}
+              title="Create a new template"
+            >
+              ➕ New
+            </button>
+            {templateList.length > 1 && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                style={{ color: '#ef4444', borderColor: '#ef4444', padding: '4px 7px' }}
+                onClick={handleDeleteTemplate}
+                title={`Delete '${selectedTemplateName}'`}
+              >
+                🗑️
+              </button>
+            )}
           </div>
 
           {activeTab === 'designer' && (
@@ -689,6 +835,148 @@ export default function App() {
 
       {/* Toast Notification */}
       {toastMessage && <div className="toast">{toastMessage}</div>}
+
+      {/* New Template Modal */}
+      {isNewModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsNewModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <span>📄</span> Create New Template
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setIsNewModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewTemplate}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Template Identifier:</label>
+                  <input
+                    type="text"
+                    className="form-input-text"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="e.g. shipping-pallet-v1"
+                    autoFocus
+                    required
+                  />
+                  <span className="form-hint">
+                    Unique name stored in S3/storage (alphanumeric, hyphens, underscores).
+                  </span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Starting Paper Size:</label>
+                  <select
+                    className="form-select"
+                    value={newPresetId}
+                    onChange={(e) => setNewPresetId(e.target.value)}
+                  >
+                    {PRESETS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {newPresetId === 'custom' && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label className="form-label">Width:</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        className="form-input-text"
+                        value={newCustomWidth}
+                        onChange={(e) => setNewCustomWidth(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label className="form-label">Height:</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        className="form-input-text"
+                        value={newCustomHeight}
+                        onChange={(e) => setNewCustomHeight(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="form-group" style={{ width: '80px' }}>
+                      <label className="form-label">Unit:</label>
+                      <select
+                        className="form-select"
+                        value={newCustomUnit}
+                        onChange={(e) => setNewCustomUnit(e.target.value as DimensionUnit)}
+                      >
+                        <option value="mm">mm</option>
+                        <option value="in">in</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label">Initial Orientation:</label>
+                  <div className="btn-group" style={{ alignSelf: 'flex-start' }}>
+                    <button
+                      type="button"
+                      className={`btn-group-item ${newOrientation === 'portrait' ? 'active' : ''}`}
+                      onClick={() => setNewOrientation('portrait')}
+                    >
+                      📄 Portrait
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-group-item ${newOrientation === 'landscape' ? 'active' : ''}`}
+                      onClick={() => setNewOrientation('landscape')}
+                    >
+                      🖼️ Landscape
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '4px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={newIncludeStarter}
+                      onChange={(e) => setNewIncludeStarter(e.target.checked)}
+                    />
+                    Include starter elements (Title text & Code 128 barcode)
+                  </label>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  style={{ color: '#64748b', borderColor: '#cbd5e1' }}
+                  onClick={() => setIsNewModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isCreating}
+                >
+                  {isCreating ? 'Creating...' : '✨ Create & Open'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
