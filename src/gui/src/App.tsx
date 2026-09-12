@@ -2,8 +2,60 @@ import { useEffect, useRef, useState } from 'react';
 import { Designer } from '@pdfme/ui';
 import { text, image, barcodes, line, rectangle, ellipse } from '@pdfme/schemas';
 
+// Distinct SVG icons for barcode differentiation
+const BARCODE_ICONS: Record<string, string> = {
+  // QR Code: Classic 3-corner finder squares + matrix cells
+  qrcode: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" stroke-width="2"></rect><rect x="5" y="5" width="3" height="3" fill="currentColor"></rect><rect x="14" y="3" width="7" height="7" stroke-width="2"></rect><rect x="16" y="5" width="3" height="3" fill="currentColor"></rect><rect x="3" y="14" width="7" height="7" stroke-width="2"></rect><rect x="5" y="16" width="3" height="3" fill="currentColor"></rect><rect x="14" y="14" width="3" height="3" fill="currentColor"></rect><rect x="18" y="18" width="3" height="3" fill="currentColor"></rect><rect x="18" y="14" width="3" height="3" fill="currentColor"></rect></svg>`,
+
+  // Code 128: Crisp linear shipping barcode with varying bar widths
+  code128: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="20" stroke-width="2"></line><line x1="6" y1="4" x2="6" y2="20" stroke-width="3"></line><line x1="10" y1="4" x2="10" y2="20" stroke-width="1.5"></line><line x1="13" y1="4" x2="13" y2="20" stroke-width="2.5"></line><line x1="17" y1="4" x2="17" y2="20" stroke-width="1"></line><line x1="21" y1="4" x2="21" y2="20" stroke-width="2"></line></svg>`,
+
+  // DataMatrix: Distinctive solid 'L' border on bottom and left, alternating clock track on top and right
+  datamatrix: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 4v16h16" stroke-width="2.5"></path><line x1="8" y1="4" x2="10" y2="4" stroke-width="2"></line><line x1="14" y1="4" x2="16" y2="4" stroke-width="2"></line><line x1="20" y1="8" x2="20" y2="10" stroke-width="2"></line><line x1="20" y1="14" x2="20" y2="16" stroke-width="2"></line><rect x="7" y="7" width="2.5" height="2.5" fill="currentColor"></rect><rect x="13" y="7" width="2.5" height="2.5" fill="currentColor"></rect><rect x="10" y="10" width="2.5" height="2.5" fill="currentColor"></rect><rect x="16" y="10" width="2.5" height="2.5" fill="currentColor"></rect><rect x="7" y="13" width="2.5" height="2.5" fill="currentColor"></rect><rect x="13" y="13" width="2.5" height="2.5" fill="currentColor"></rect></svg>`,
+
+  // GS1 DataMatrix: DataMatrix with distinctive corner brackets
+  gs1datamatrix: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 5v14h14" stroke-width="2.5"></path><rect x="6" y="8" width="2" height="2" fill="currentColor"></rect><rect x="11" y="8" width="2" height="2" fill="currentColor"></rect><rect x="8" y="11" width="2" height="2" fill="currentColor"></rect><rect x="13" y="11" width="2" height="2" fill="currentColor"></rect><rect x="6" y="14" width="2" height="2" fill="currentColor"></rect><path d="M17 3h4v4" stroke-width="1.8"></path><path d="M21 17v4h-4" stroke-width="1.8"></path></svg>`,
+
+  // EAN-13: Characteristic guard bars on left, center, and right that extend down
+  ean13: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="21" stroke-width="2"></line><line x1="5" y1="4" x2="5" y2="21" stroke-width="1.5"></line><line x1="8" y1="4" x2="8" y2="18"></line><line x1="10" y1="4" x2="10" y2="18" stroke-width="2"></line><line x1="12" y1="4" x2="12" y2="21" stroke-width="1.5"></line><line x1="14" y1="4" x2="14" y2="21" stroke-width="1.5"></line><line x1="17" y1="4" x2="17" y2="18" stroke-width="2"></line><line x1="20" y1="4" x2="20" y2="21" stroke-width="1.5"></line><line x1="22" y1="4" x2="22" y2="21" stroke-width="2"></line></svg>`,
+
+  // ITF-14: Master shipping carton enclosed in a heavy rectangular bearer box
+  itf14: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="4" width="20" height="16" stroke-width="2.5"></rect><line x1="5" y1="7" x2="5" y2="17" stroke-width="1.5"></line><line x1="8" y1="7" x2="8" y2="17" stroke-width="2.5"></line><line x1="12" y1="7" x2="12" y2="17" stroke-width="1"></line><line x1="15" y1="7" x2="15" y2="17" stroke-width="2"></line><line x1="18" y1="7" x2="18" y2="17" stroke-width="1.5"></line></svg>`,
+
+  // Code 39: Standard discrete barcode pattern with start/stop lines
+  code39: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="20" stroke-width="2.5"></line><line x1="6" y1="4" x2="6" y2="20" stroke-width="1"></line><line x1="9" y1="4" x2="9" y2="20" stroke-width="2.5"></line><line x1="13" y1="4" x2="13" y2="20" stroke-width="1"></line><line x1="16" y1="4" x2="16" y2="20" stroke-width="2.5"></line><line x1="20" y1="4" x2="20" y2="20" stroke-width="1.5"></line></svg>`,
+
+  // UPC-A: 12-digit standard retail barcode with split pattern
+  upca: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="21" stroke-width="2"></line><line x1="5" y1="4" x2="5" y2="21" stroke-width="1.5"></line><line x1="8" y1="4" x2="8" y2="18" stroke-width="2"></line><line x1="11" y1="4" x2="11" y2="18" stroke-width="1"></line><line x1="13" y1="4" x2="13" y2="21" stroke-width="1.5"></line><line x1="16" y1="4" x2="16" y2="18" stroke-width="2"></line><line x1="19" y1="4" x2="19" y2="21" stroke-width="1.5"></line><line x1="21" y1="4" x2="21" y2="21" stroke-width="2"></line></svg>`,
+
+  // UPC-E: Compact 6-digit retail barcode
+  upce: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="4" y1="4" x2="4" y2="21" stroke-width="2"></line><line x1="6" y1="4" x2="6" y2="21" stroke-width="1"></line><line x1="9" y1="4" x2="9" y2="18" stroke-width="2"></line><line x1="12" y1="4" x2="12" y2="18" stroke-width="2.5"></line><line x1="15" y1="4" x2="15" y2="18" stroke-width="1.5"></line><line x1="18" y1="4" x2="18" y2="21" stroke-width="2"></line></svg>`,
+
+  // PDF-417: Stacked 2D barcode rows
+  pdf417: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none"><line x1="3" y1="4" x2="3" y2="20" stroke-width="2.5"></line><line x1="21" y1="4" x2="21" y2="20" stroke-width="2.5"></line><line x1="6" y1="6" x2="18" y2="6" stroke-dasharray="2 1.5"></line><line x1="6" y1="9.5" x2="18" y2="9.5" stroke-dasharray="3 1"></line><line x1="6" y1="13" x2="18" y2="13" stroke-dasharray="1.5 2"></line><line x1="6" y1="16.5" x2="18" y2="16.5" stroke-dasharray="2 1.5"></line></svg>`,
+};
+
+const PLUGIN_DESCRIPTIONS: Record<string, string> = {
+  text: 'Text: Single or multi-line dynamic/static text',
+  image: 'Image: Static or dynamic graphic',
+  line: 'Line: Divider line',
+  rectangle: 'Rectangle: Border box or background block',
+  ellipse: 'Ellipse: Circle or oval shape',
+  qrcode: 'QR Code: 2D Quick Response matrix',
+  code128: 'Code 128: Universal logistics & shipping barcode',
+  datamatrix: 'DataMatrix: 2D square matrix for packaging & containers',
+  gs1datamatrix: 'GS1 DataMatrix: GS1 compliant 2D barcode',
+  ean13: 'EAN-13: Standard 13-digit retail barcode',
+  itf14: 'ITF-14: Master carton & shipping container barcode with bearer box',
+  code39: 'Code 39: Alphanumeric industrial barcode',
+  upce: 'UPC-E: Compact 6-digit retail barcode',
+  upca: 'UPC-A: Standard 12-digit retail barcode',
+  pdf417: 'PDF-417: High-capacity stacked 2D transport barcode',
+};
+
 const datamatrixPlugin = {
   ...barcodes.gs1datamatrix,
+  icon: BARCODE_ICONS.datamatrix,
   propPanel: {
     ...barcodes.gs1datamatrix.propPanel,
     defaultSchema: {
@@ -19,16 +71,16 @@ const plugins = {
   line,
   rectangle,
   ellipse,
-  qrcode: barcodes.qrcode,
-  code128: barcodes.code128,
+  qrcode: { ...barcodes.qrcode, icon: BARCODE_ICONS.qrcode },
+  code128: { ...barcodes.code128, icon: BARCODE_ICONS.code128 },
   datamatrix: datamatrixPlugin,
-  gs1datamatrix: barcodes.gs1datamatrix,
-  ean13: barcodes.ean13,
-  itf14: barcodes.itf14,
-  code39: barcodes.code39,
-  upce: barcodes.upce,
-  upca: barcodes.upca,
-  pdf417: barcodes.pdf417,
+  gs1datamatrix: { ...barcodes.gs1datamatrix, icon: BARCODE_ICONS.gs1datamatrix },
+  ean13: { ...barcodes.ean13, icon: BARCODE_ICONS.ean13 },
+  itf14: { ...barcodes.itf14, icon: BARCODE_ICONS.itf14 },
+  code39: { ...barcodes.code39, icon: BARCODE_ICONS.code39 },
+  upce: { ...barcodes.upce, icon: BARCODE_ICONS.upce },
+  upca: { ...barcodes.upca, icon: BARCODE_ICONS.upca },
+  pdf417: { ...barcodes.pdf417, icon: BARCODE_ICONS.pdf417 },
 };
 
 type DimensionUnit = 'mm' | 'in';
@@ -122,12 +174,139 @@ export default function App() {
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // New Template Modal State
+  const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
+  const [newTemplateName, setNewTemplateName] = useState<string>('');
+  const [newPresetId, setNewPresetId] = useState<string>('thermal-4x6');
+  const [newOrientation, setNewOrientation] = useState<PageOrientation>('portrait');
+  const [newCustomWidth, setNewCustomWidth] = useState<number>(101.6);
+  const [newCustomHeight, setNewCustomHeight] = useState<number>(152.4);
+  const [newCustomUnit, setNewCustomUnit] = useState<DimensionUnit>('mm');
+  const [newIncludeStarter, setNewIncludeStarter] = useState<boolean>(true);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+
   const designerContainerRef = useRef<HTMLDivElement | null>(null);
   const designerInstanceRef = useRef<Designer | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleOpenNewModal = () => {
+    const timestamp = Math.floor(Math.random() * 899 + 100);
+    setNewTemplateName(`label-template-${timestamp}`);
+    setNewPresetId('thermal-4x6');
+    setNewOrientation('portrait');
+    setNewCustomWidth(101.6);
+    setNewCustomHeight(152.4);
+    setNewCustomUnit('mm');
+    setNewIncludeStarter(true);
+    setIsNewModalOpen(true);
+  };
+
+  const handleCreateNewTemplate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanName = newTemplateName.trim();
+    if (!cleanName) {
+      showToast('❌ Template name cannot be empty');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(cleanName)) {
+      showToast('❌ Template name can only contain letters, numbers, hyphens, and underscores');
+      return;
+    }
+
+    let widthMm = newCustomWidth;
+    let heightMm = newCustomHeight;
+
+    if (newPresetId !== 'custom') {
+      const preset = PRESETS.find((p) => p.id === newPresetId);
+      if (preset) {
+        widthMm = preset.widthMm;
+        heightMm = preset.heightMm;
+      }
+    } else if (newCustomUnit === 'in') {
+      widthMm = parseFloat((newCustomWidth * 25.4).toFixed(2));
+      heightMm = parseFloat((newCustomHeight * 25.4).toFixed(2));
+    }
+
+    // Apply orientation
+    const minDim = Math.min(widthMm, heightMm);
+    const maxDim = Math.max(widthMm, heightMm);
+    const finalWidth = newOrientation === 'landscape' ? maxDim : minDim;
+    const finalHeight = newOrientation === 'landscape' ? minDim : maxDim;
+
+    const initialSchema = newIncludeStarter ? [
+      {
+        name: "title",
+        type: "text",
+        position: { x: 6, y: 6 },
+        width: Math.min(finalWidth - 12, 60),
+        height: 8,
+        fontSize: 14,
+        content: "Template Title",
+      },
+      {
+        name: "barcode_tracking",
+        type: "code128",
+        position: { x: 6, y: 20 },
+        width: Math.min(finalWidth - 12, 88),
+        height: 25,
+        content: "1Z9999999999999999",
+      }
+    ] : [];
+
+    const newTemplateObj = {
+      basePdf: {
+        width: finalWidth,
+        height: finalHeight,
+        padding: [4, 4, 4, 4],
+      },
+      schemas: [initialSchema],
+    };
+
+    try {
+      setIsCreating(true);
+      const res = await fetch(`/api/v1/templates/${encodeURIComponent(cleanName)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTemplateObj),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🎉 Created new template '${cleanName}'!`);
+        setIsNewModalOpen(false);
+        await fetchTemplates();
+        setSelectedTemplateName(cleanName);
+      } else {
+        showToast(`❌ Failed to create template: ${data.error?.message || JSON.stringify(data)}`);
+      }
+    } catch (err: any) {
+      showToast(`❌ Network error: ${err.message}`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!window.confirm(`Are you sure you want to delete template '${selectedTemplateName}'?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/v1/templates/${encodeURIComponent(selectedTemplateName)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🗑️ Deleted template '${selectedTemplateName}'`);
+        await fetchTemplates();
+      } else {
+        showToast(`❌ Error deleting: ${data.error?.message}`);
+      }
+    } catch (err: any) {
+      showToast(`❌ Network error: ${err.message}`);
+    }
   };
 
   // Fetch templates list on mount
@@ -222,6 +401,9 @@ export default function App() {
         domContainer: designerContainerRef.current,
         template: currentTemplate,
         plugins: plugins as any,
+        options: {
+          icons: BARCODE_ICONS,
+        },
       });
 
       designerInstanceRef.current.onSaveTemplate((updatedTemplate) => {
@@ -232,7 +414,23 @@ export default function App() {
       designerInstanceRef.current.updateTemplate(currentTemplate);
     }
 
+    // Attach rich tooltips to sidebar plugin buttons
+    const applyTooltips = () => {
+      if (!designerContainerRef.current) return;
+      Object.entries(PLUGIN_DESCRIPTIONS).forEach(([type, desc]) => {
+        const btn = designerContainerRef.current?.querySelector(
+          `.pdfme-designer-plugin-${type}`
+        ) as HTMLElement | null;
+        if (btn) {
+          btn.setAttribute('title', desc);
+        }
+      });
+    };
+
+    const timer = setTimeout(applyTooltips, 150);
+
     return () => {
+      clearTimeout(timer);
       if (designerInstanceRef.current) {
         designerInstanceRef.current.destroy();
         designerInstanceRef.current = null;
@@ -442,6 +640,25 @@ export default function App() {
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleOpenNewModal}
+              title="Create a new template"
+            >
+              ➕ New
+            </button>
+            {templateList.length > 1 && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                style={{ color: '#ef4444', borderColor: '#ef4444', padding: '4px 7px' }}
+                onClick={handleDeleteTemplate}
+                title={`Delete '${selectedTemplateName}'`}
+              >
+                🗑️
+              </button>
+            )}
           </div>
 
           {activeTab === 'designer' && (
@@ -618,6 +835,148 @@ export default function App() {
 
       {/* Toast Notification */}
       {toastMessage && <div className="toast">{toastMessage}</div>}
+
+      {/* New Template Modal */}
+      {isNewModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsNewModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <span>📄</span> Create New Template
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setIsNewModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewTemplate}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Template Identifier:</label>
+                  <input
+                    type="text"
+                    className="form-input-text"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="e.g. shipping-pallet-v1"
+                    autoFocus
+                    required
+                  />
+                  <span className="form-hint">
+                    Unique name stored in S3/storage (alphanumeric, hyphens, underscores).
+                  </span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Starting Paper Size:</label>
+                  <select
+                    className="form-select"
+                    value={newPresetId}
+                    onChange={(e) => setNewPresetId(e.target.value)}
+                  >
+                    {PRESETS.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {newPresetId === 'custom' && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label className="form-label">Width:</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        className="form-input-text"
+                        value={newCustomWidth}
+                        onChange={(e) => setNewCustomWidth(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label className="form-label">Height:</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        className="form-input-text"
+                        value={newCustomHeight}
+                        onChange={(e) => setNewCustomHeight(parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="form-group" style={{ width: '80px' }}>
+                      <label className="form-label">Unit:</label>
+                      <select
+                        className="form-select"
+                        value={newCustomUnit}
+                        onChange={(e) => setNewCustomUnit(e.target.value as DimensionUnit)}
+                      >
+                        <option value="mm">mm</option>
+                        <option value="in">in</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label">Initial Orientation:</label>
+                  <div className="btn-group" style={{ alignSelf: 'flex-start' }}>
+                    <button
+                      type="button"
+                      className={`btn-group-item ${newOrientation === 'portrait' ? 'active' : ''}`}
+                      onClick={() => setNewOrientation('portrait')}
+                    >
+                      📄 Portrait
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-group-item ${newOrientation === 'landscape' ? 'active' : ''}`}
+                      onClick={() => setNewOrientation('landscape')}
+                    >
+                      🖼️ Landscape
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '4px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={newIncludeStarter}
+                      onChange={(e) => setNewIncludeStarter(e.target.checked)}
+                    />
+                    Include starter elements (Title text & Code 128 barcode)
+                  </label>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  style={{ color: '#64748b', borderColor: '#cbd5e1' }}
+                  onClick={() => setIsNewModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isCreating}
+                >
+                  {isCreating ? 'Creating...' : '✨ Create & Open'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
