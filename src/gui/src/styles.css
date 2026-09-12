@@ -333,3 +333,131 @@ body, html {
   align-items: center;
   gap: 8px;
 }
+
+/* ==========================================================================
+   pdfme Left Sidebar & Plugin Button Labels
+   ========================================================================== */
+
+.pdfme-designer-left-sidebar {
+  width: 78px !important;
+  background: #0f172a !important;
+  border-right: 1px solid #334155 !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15) !important;
+  padding: 8px 4px 24px 4px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+.pdfme-designer-left-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.pdfme-designer-left-sidebar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+/* Offset the main designer canvas container by the new sidebar width */
+.pdfme-designer-left-sidebar + div {
+  margin-left: 78px !important;
+  width: calc(100% - 78px) !important;
+}
+
+/* Plugin Button in Sidebar */
+.pdfme-designer-left-sidebar button {
+  width: 68px !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 6px auto !important;
+  padding: 4px 2px 3px 2px !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  color: #0f172a !important;
+  transition: all 0.15s ease-in-out !important;
+  cursor: grab !important;
+  position: relative !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.pdfme-designer-left-sidebar button:active {
+  cursor: grabbing !important;
+}
+
+.pdfme-designer-left-sidebar button:hover {
+  background: #ffffff !important;
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Icon container inside Button with clean white background */
+.pdfme-designer-left-sidebar button > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 24px !important;
+  background: #ffffff !important;
+  border-radius: 4px !important;
+  margin-bottom: 2px !important;
+}
+
+.pdfme-designer-left-sidebar button svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+
+.pdfme-designer-left-sidebar button:hover svg {
+  color: #2563eb !important;
+  stroke: #2563eb !important;
+}
+
+/* Text Label underneath Icon */
+.pdfme-designer-left-sidebar button::after {
+  display: block !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.2px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  max-width: 64px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #475569 !important;
+  pointer-events: none !important;
+  margin-top: 2px !important;
+}
+
+.pdfme-designer-left-sidebar button:hover::after {
+  color: #2563eb !important;
+}
+
+/* Specific Plugin Labels */
+.pdfme-designer-plugin-text::after { content: "Text"; }
+.pdfme-designer-plugin-image::after { content: "Image"; }
+.pdfme-designer-plugin-line::after { content: "Line"; }
+.pdfme-designer-plugin-rectangle::after { content: "Rectangle"; }
+.pdfme-designer-plugin-ellipse::after { content: "Ellipse"; }
+.pdfme-designer-plugin-qrcode::after { content: "QR Code"; }
+.pdfme-designer-plugin-code128::after { content: "Code 128"; }
+.pdfme-designer-plugin-datamatrix::after { content: "DataMatrix"; }
+.pdfme-designer-plugin-gs1datamatrix::after { content: "GS1 DM"; }
+.pdfme-designer-plugin-ean13::after { content: "EAN-13"; }
+.pdfme-designer-plugin-itf14::after { content: "ITF-14"; }
+.pdfme-designer-plugin-code39::after { content: "Code 39"; }
+.pdfme-designer-plugin-upce::after { content: "UPC-E"; }
+.pdfme-designer-plugin-upca::after { content: "UPC-A"; }
+.pdfme-designer-plugin-pdf417::after { content: "PDF-417"; }
+
