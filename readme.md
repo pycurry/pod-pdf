@@ -1,4 +1,4 @@
-# pod-PDF: Multi-Page PDF Generation Microservice
+# pod-PDF: Ready to deploy PDF generator and designer
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
