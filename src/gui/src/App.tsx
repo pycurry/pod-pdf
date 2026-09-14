@@ -2,38 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Designer } from '@pdfme/ui';
 import { text, image, barcodes, line, rectangle, ellipse } from '@pdfme/schemas';
 
-// Distinct SVG icons for barcode differentiation
-const BARCODE_ICONS: Record<string, string> = {
-  // QR Code: Classic 3-corner finder squares + matrix cells
-  qrcode: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" stroke-width="2"></rect><rect x="5" y="5" width="3" height="3" fill="currentColor"></rect><rect x="14" y="3" width="7" height="7" stroke-width="2"></rect><rect x="16" y="5" width="3" height="3" fill="currentColor"></rect><rect x="3" y="14" width="7" height="7" stroke-width="2"></rect><rect x="5" y="16" width="3" height="3" fill="currentColor"></rect><rect x="14" y="14" width="3" height="3" fill="currentColor"></rect><rect x="18" y="18" width="3" height="3" fill="currentColor"></rect><rect x="18" y="14" width="3" height="3" fill="currentColor"></rect></svg>`,
+import { BARCODE_ICONS } from './assets/icons';
 
-  // Code 128: Crisp linear shipping barcode with varying bar widths
-  code128: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="20" stroke-width="2"></line><line x1="6" y1="4" x2="6" y2="20" stroke-width="3"></line><line x1="10" y1="4" x2="10" y2="20" stroke-width="1.5"></line><line x1="13" y1="4" x2="13" y2="20" stroke-width="2.5"></line><line x1="17" y1="4" x2="17" y2="20" stroke-width="1"></line><line x1="21" y1="4" x2="21" y2="20" stroke-width="2"></line></svg>`,
-
-  // DataMatrix: Distinctive solid 'L' border on bottom and left, alternating clock track on top and right
-  datamatrix: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 4v16h16" stroke-width="2.5"></path><line x1="8" y1="4" x2="10" y2="4" stroke-width="2"></line><line x1="14" y1="4" x2="16" y2="4" stroke-width="2"></line><line x1="20" y1="8" x2="20" y2="10" stroke-width="2"></line><line x1="20" y1="14" x2="20" y2="16" stroke-width="2"></line><rect x="7" y="7" width="2.5" height="2.5" fill="currentColor"></rect><rect x="13" y="7" width="2.5" height="2.5" fill="currentColor"></rect><rect x="10" y="10" width="2.5" height="2.5" fill="currentColor"></rect><rect x="16" y="10" width="2.5" height="2.5" fill="currentColor"></rect><rect x="7" y="13" width="2.5" height="2.5" fill="currentColor"></rect><rect x="13" y="13" width="2.5" height="2.5" fill="currentColor"></rect></svg>`,
-
-  // GS1 DataMatrix: DataMatrix with distinctive corner brackets
-  gs1datamatrix: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 5v14h14" stroke-width="2.5"></path><rect x="6" y="8" width="2" height="2" fill="currentColor"></rect><rect x="11" y="8" width="2" height="2" fill="currentColor"></rect><rect x="8" y="11" width="2" height="2" fill="currentColor"></rect><rect x="13" y="11" width="2" height="2" fill="currentColor"></rect><rect x="6" y="14" width="2" height="2" fill="currentColor"></rect><path d="M17 3h4v4" stroke-width="1.8"></path><path d="M21 17v4h-4" stroke-width="1.8"></path></svg>`,
-
-  // EAN-13: Characteristic guard bars on left, center, and right that extend down
-  ean13: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="21" stroke-width="2"></line><line x1="5" y1="4" x2="5" y2="21" stroke-width="1.5"></line><line x1="8" y1="4" x2="8" y2="18"></line><line x1="10" y1="4" x2="10" y2="18" stroke-width="2"></line><line x1="12" y1="4" x2="12" y2="21" stroke-width="1.5"></line><line x1="14" y1="4" x2="14" y2="21" stroke-width="1.5"></line><line x1="17" y1="4" x2="17" y2="18" stroke-width="2"></line><line x1="20" y1="4" x2="20" y2="21" stroke-width="1.5"></line><line x1="22" y1="4" x2="22" y2="21" stroke-width="2"></line></svg>`,
-
-  // ITF-14: Master shipping carton enclosed in a heavy rectangular bearer box
-  itf14: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="4" width="20" height="16" stroke-width="2.5"></rect><line x1="5" y1="7" x2="5" y2="17" stroke-width="1.5"></line><line x1="8" y1="7" x2="8" y2="17" stroke-width="2.5"></line><line x1="12" y1="7" x2="12" y2="17" stroke-width="1"></line><line x1="15" y1="7" x2="15" y2="17" stroke-width="2"></line><line x1="18" y1="7" x2="18" y2="17" stroke-width="1.5"></line></svg>`,
-
-  // Code 39: Standard discrete barcode pattern with start/stop lines
-  code39: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="20" stroke-width="2.5"></line><line x1="6" y1="4" x2="6" y2="20" stroke-width="1"></line><line x1="9" y1="4" x2="9" y2="20" stroke-width="2.5"></line><line x1="13" y1="4" x2="13" y2="20" stroke-width="1"></line><line x1="16" y1="4" x2="16" y2="20" stroke-width="2.5"></line><line x1="20" y1="4" x2="20" y2="20" stroke-width="1.5"></line></svg>`,
-
-  // UPC-A: 12-digit standard retail barcode with split pattern
-  upca: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="3" y1="4" x2="3" y2="21" stroke-width="2"></line><line x1="5" y1="4" x2="5" y2="21" stroke-width="1.5"></line><line x1="8" y1="4" x2="8" y2="18" stroke-width="2"></line><line x1="11" y1="4" x2="11" y2="18" stroke-width="1"></line><line x1="13" y1="4" x2="13" y2="21" stroke-width="1.5"></line><line x1="16" y1="4" x2="16" y2="18" stroke-width="2"></line><line x1="19" y1="4" x2="19" y2="21" stroke-width="1.5"></line><line x1="21" y1="4" x2="21" y2="21" stroke-width="2"></line></svg>`,
-
-  // UPC-E: Compact 6-digit retail barcode
-  upce: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"><line x1="4" y1="4" x2="4" y2="21" stroke-width="2"></line><line x1="6" y1="4" x2="6" y2="21" stroke-width="1"></line><line x1="9" y1="4" x2="9" y2="18" stroke-width="2"></line><line x1="12" y1="4" x2="12" y2="18" stroke-width="2.5"></line><line x1="15" y1="4" x2="15" y2="18" stroke-width="1.5"></line><line x1="18" y1="4" x2="18" y2="21" stroke-width="2"></line></svg>`,
-
-  // PDF-417: Stacked 2D barcode rows
-  pdf417: `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none"><line x1="3" y1="4" x2="3" y2="20" stroke-width="2.5"></line><line x1="21" y1="4" x2="21" y2="20" stroke-width="2.5"></line><line x1="6" y1="6" x2="18" y2="6" stroke-dasharray="2 1.5"></line><line x1="6" y1="9.5" x2="18" y2="9.5" stroke-dasharray="3 1"></line><line x1="6" y1="13" x2="18" y2="13" stroke-dasharray="1.5 2"></line><line x1="6" y1="16.5" x2="18" y2="16.5" stroke-dasharray="2 1.5"></line></svg>`,
-};
 
 const PLUGIN_DESCRIPTIONS: Record<string, string> = {
   text: 'Text: Single or multi-line dynamic/static text',
