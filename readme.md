@@ -1,12 +1,24 @@
-# pod-PDF: Enterprise Logistic Label & Multi-Page PDF Microservice
+# pod-PDF: Multi-Page PDF Generation Microservice
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**pod-PDF** is a containerized microservice designed for high-throughput, template-driven PDF generation at enterprise scale. It provides robust capabilities for generating multi-page documents, custom thermal label sizes (e.g., 4x6 inch rolls), and complex logistic elements including standard barcodes (Code 128, Code 39, ITF-14, EAN/UPC), QR codes, and 2D Data Matrices.
+**pod-PDF** is a containerized microservice designed for high-throughput, template-driven PDF generation at enterprise scale. It provides robust capabilities for generating multi-page documents, custom thermal label sizes (e.g., 4x6 inch rolls), and complex logistic elements including standard barcodes (Code 128, Code 39, ITF-14, EAN/UPC), QR codes, and 2D Data Matrix.
 
 The service integrates **pdfme** for visual template design and execution, **AWS S3** for persistent storage with pre-signed URLs (with automatic zero-dependency local disk fallback), and supports both **synchronous REST APIs** and **asynchronous message queues** (Kafka, AWS SQS, and built-in workers).
+
+## Template Designer
+
+<p align="center">
+  <img src="docs/Screenshot-designer.png"  alt="Template designer" />
+</p>
+
+## Testing and Preview
+
+<p align="center">
+  <img src="docs/Screenshot-preview-test.png"  alt="Testing and preview" />
+</p>
 
 ---
 
